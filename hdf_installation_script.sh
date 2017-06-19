@@ -39,7 +39,8 @@ sudo yum install -y wget
 
 # Setup password-less SSH
 ssh-keygen
-cat ~/.ssh/id_rsa.pub >> authorized_keys
+sudo sh -c "cat /home/centos/.ssh/id_rsa.pub >> /home/centos/.ssh/authorized_keys"
+ssh centos@$HOSTNAME.field.hortonworks.com
 chmod 700 ~/.ssh
 chmod 600 ~/.ssh/authorized_keys
 
@@ -125,3 +126,7 @@ sudo ambari-server start
 
 # Open up Ambari and continue with Browser-based installation
 echo http://$HOSTNAME:8080
+
+cat ~/.ssh/id_rsa
+
+#ZEND
