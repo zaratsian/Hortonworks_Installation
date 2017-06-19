@@ -71,6 +71,36 @@ sudo yum install -y ambari-server
 sudo echo -e "y\nn\n1\ny\nn" | sudo ambari-server setup
 sudo ambari-server start
 
+# Install MySQL
+sudo yum install -y mysql-connector-java*
+sudo ambari-server setup --jdbc-db=mysql --jdbc-driver=/usr/share/java/mysql-connector-java.jar
+sudo yum -y localinstall https://dev.mysql.com/get/mysql57-community-release-el7-8.noarch.rpm
+sudo yum install -y mysql-community-server
+sudo systemctl start mysqld.service
+grep 'A temporary password is generated for root@localhost' /var/log/mysqld.log |tail -1   # This command should output a temporary password.
+sudo /usr/bin/mysql_secure_installation  # Enter the password, generated in the previous step.
+
+# Setup MySQL Database and Users 
+# For Druid and Superset
+
+mysql -u root -p  # Enter the new MySQL password that was created in the previous step.
+
+CREATE DATABASE druid DEFAULT CHARACTER SET utf8;
+CREATE DATABASE superset DEFAULT CHARACTER SET utf8;
+
+echo "Change the MySQL password IDENTIFIED BY, show in the next two lines"
+sleep 15
+
+CREATE USER 'druid'@'%' IDENTIFIED BY 'xxx';
+CREATE USER 'superset'@'%' IDENTIFIED BY 'xxx';
+
+GRANT ALL PRIVILEGES ON *.* TO 'druid'@'%' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON *.* TO 'superset'@'%' WITH GRANT OPTION;
+
+commit;
+
+exit
+
 # Open up Ambari and continue with Browser-based installation
 echo http://$HOSTNAME:8080
 
