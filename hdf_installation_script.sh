@@ -100,23 +100,6 @@ GRANT ALL PRIVILEGES ON streamline.* TO 'streamline'@'%' WITH GRANT OPTION ;
 
 commit;
 
-# Setup MySQL Database and Users 
-# For Druid and Superset
-
-CREATE DATABASE druid DEFAULT CHARACTER SET utf8;
-CREATE DATABASE superset DEFAULT CHARACTER SET utf8;
-
-echo "Change the MySQL password IDENTIFIED BY, show in the next two lines"
-sleep 15
-
-CREATE USER 'druid'@'%' IDENTIFIED BY 'xxx';
-CREATE USER 'superset'@'%' IDENTIFIED BY 'xxx';
-
-GRANT ALL PRIVILEGES ON *.* TO 'druid'@'%' WITH GRANT OPTION;
-GRANT ALL PRIVILEGES ON *.* TO 'superset'@'%' WITH GRANT OPTION;
-
-commit;
-
 exit
 
 # Install HDF Management Pack
