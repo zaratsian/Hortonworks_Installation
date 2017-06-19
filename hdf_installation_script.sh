@@ -52,6 +52,7 @@ sudo systemctl start ntpd
 
 # Update /etc/hosts/ file
 sudo sh -c "echo $HDF_HOST $HOSTNAME $HOSTNAME.field.hortonworks.com >> /etc/hosts"
+cat /etc/hosts
 
 echo 'Printing hostname...'
 sleep 3
