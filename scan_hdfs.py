@@ -24,17 +24,23 @@ for day in days_path:
         hours_path.append(path)
 
 minutes_path = []
-for hour in hours_path:
-    minutes = client.listdir(hour)
+for path in hours_path:
+    minutes = client.listdir(path)
+    if len(minutes) != 60:
+        print '[ INFO ] Incomplete minutes (less than 60) in path: ' + str(path)
+    
     for minute in minutes:
-        path = hour + '/' + str(minute)
-        #print path
-        minutes_path.append(path)
+        path_out = path + '/' + str(minute)
+        #print path_out
+        minutes_path.append(path_out)
 
 counter = 0
+len_contents_list = []
 for path in minutes_path:
-    contents = re.sub('\n$','',client.open(path).read())
-    counter += len(contents.split('\n'))
+    len_contents = len(re.sub('\n$','',client.open(path).read()).split('\n'))
+    len_contents_list.append(len_contents)
+    counter += len_contents
+
 
 print '\n\nTotal number of logs: ' + str(counter) + '\n\n'
 
