@@ -27,7 +27,7 @@ minutes_path = []
 for path in hours_path:
     minutes = client.listdir(path)
     if len(minutes) != 60:
-        print '[ INFO ] Incomplete minutes (less than 60) in path: ' + str(path)
+        print '[ INFO ] Incomplete minutes (less than 60) in path: ' + str(path) + ' (Count = ' + str(len(minutes)) + ')'
     
     for minute in minutes:
         path_out = path + '/' + str(minute)
