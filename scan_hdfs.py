@@ -33,7 +33,7 @@ for hour in hours_path:
 
 counter = 0
 for path in minutes_path:
-    contents = re.sub('\n$','',client.open('/topics/minifitest/2017/01/01/00/2017_01_01_00_00.log').read())
+    contents = re.sub('\n$','',client.open(path).read())
     counter += len(contents.split('\n'))
 
 print 'Total number of logs: ' + str(counter)
