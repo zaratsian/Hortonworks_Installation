@@ -36,7 +36,7 @@ for path in minutes_path:
     contents = re.sub('\n$','',client.open(path).read())
     counter += len(contents.split('\n'))
 
-print 'Total number of logs: ' + str(counter)
+print '\n\nTotal number of logs: ' + str(counter) + '\n\n'
 
 
 #ZEND
