@@ -16,21 +16,9 @@
 #
 #################################################################################################################
 
-'''
-export HDP1_HOST="172.26.202.186"
-export HDP2_HOST="172.26.202.187"
-export HDP3_HOST="172.26.202.188"
-
-ssh -i ~/.ssh/field.pem centos@172.26.202.186
-ssh -i ~/.ssh/field.pem centos@172.26.202.187
-ssh -i ~/.ssh/field.pem centos@172.26.202.188
-'''
 
 ssh -i ~/.ssh/field.pem centos@172.26.202.186
 
-export HDP1_HOST="172.26.202.186"
-export HDP2_HOST="172.26.202.187"
-export HDP3_HOST="172.26.202.188"
 
 # Update Centos
 sudo yum -y update
@@ -39,9 +27,13 @@ sudo yum install -y wget
 # Setup password-less SSH
 ssh-keygen
 sudo sh -c "cat /home/centos/.ssh/id_rsa.pub >> /home/centos/.ssh/authorized_keys"
-ssh centos@$HOSTNAME.field.hortonworks.com
 chmod 700 ~/.ssh
 chmod 600 ~/.ssh/authorized_keys
+cat ~/.ssh/id_rsa.pub
+
+# Run on all other hosts
+sudo vi ~/.ssh/authorized_keys
+echo ssh $(whoami)@$(hostname -f)
 
 # Enable NTP 
 sudo yum install -y ntp
@@ -50,15 +42,11 @@ sudo systemctl enable ntpd
 sudo systemctl start ntpd
 
 # Update /etc/hosts/ file
-sudo sh -c "echo $HDP1_HOST $HOSTNAME $HOSTNAME.field.hortonworks.com >> /etc/hosts"
+sudo sh -c "echo $(ifconfig eth0 | grep 'inet ' | cut -d: -f2 | awk '{ print $2}') $HOSTNAME $(hostname -f) >> /etc/hosts"
 cat /etc/hosts
 
-echo 'Printing hostname...'
-sleep 3
-hostname -f
-
 # Edit the Network Configuration File
-sudo sh -c "echo HOSTNAME=$HOSTNAME.field.hortonworks.com >> /etc/sysconfig/network"
+#sudo sh -c "echo HOSTNAME=$(hostname -f) >> /etc/sysconfig/network"
 
 # Temporarily Disable Firewall
 sudo systemctl disable firewalld
@@ -71,7 +59,8 @@ sudo yum install -y ambari-server
 sudo echo -e "y\nn\n1\ny\nn" | sudo ambari-server setup
 sudo ambari-server start
 
-# Install MySQL
+# Setup MySQL Database and Users 
+# For Druid and Superset
 sudo yum install -y mysql-connector-java*
 sudo ambari-server setup --jdbc-db=mysql --jdbc-driver=/usr/share/java/mysql-connector-java.jar
 sudo yum -y localinstall https://dev.mysql.com/get/mysql57-community-release-el7-8.noarch.rpm
@@ -80,9 +69,7 @@ sudo systemctl start mysqld.service
 grep 'A temporary password is generated for root@localhost' /var/log/mysqld.log |tail -1   # This command should output a temporary password.
 sudo /usr/bin/mysql_secure_installation  # Enter the password, generated in the previous step.
 
-# Setup MySQL Database and Users 
-# For Druid and Superset
-
+# Login to MySQL
 mysql -u root -p  # Enter the new MySQL password that was created in the previous step.
 
 CREATE DATABASE druid DEFAULT CHARACTER SET utf8;
