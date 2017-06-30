@@ -8,6 +8,8 @@
 #   Installation: https://docs.hortonworks.com/HDPDocuments/Ambari-2.5.1.0/bk_ambari-installation/content/ch_Getting_Ready.html
 #   Ambari Repos: https://docs.hortonworks.com/HDPDocuments/Ambari-2.5.1.0/bk_ambari-installation/content/ambari_repositories.html
 #   HDP Repos:    https://docs.hortonworks.com/HDPDocuments/Ambari-2.5.1.0/bk_ambari-installation/content/hdp_26_repositories.html
+#   HDF Repos:    https://docs.hortonworks.com/HDPDocuments/HDF3/HDF-3.0.0/bk_release-notes/content/ch_hdf_relnotes.html   
+#
 #   Test on: CentOS Linux release 7.2.1511 (Core) 
 #
 #################################################################################################################
