@@ -90,54 +90,7 @@ exit
 echo http://$HOSTNAME:8080
 
 cat ~/.ssh/id_rsa
-cat ~/.ssh/id_rsa.pub 
+#cat ~/.ssh/id_rsa.pub 
 
-
-# Configure Additional HDP Nodes
-
-
-# Node 2
-
-ssh -i ~/.ssh/field.pem centos@172.26.202.187
-
-export HDP2_HOST="172.26.202.187"
-
-ssh-keygen
-
-sudo vi ~/.ssh/authorized_keys
-# Then add .ssh/id_rsa.pub from Node 1
-
-echo $HOSTNAME
-
-
-
-# Node 3
-
-ssh -i ~/.ssh/field.pem centos@172.26.202.188
-
-export HDP3_HOST="172.26.202.188"
-
-ssh-keygen
-
-sudo vi ~/.ssh/authorized_keys
-# Then add .ssh/id_rsa.pub from Node 1
-
-echo $HOSTNAME
-
-
-
-# From Node 1
-# SSH into nodes 2, 3, ...
-
-ssh centos@$HDP2_HOST
-
-ssh centos@$HDP3_HOST
-
-# Open up Ambari and continue with Browser-based installation
-echo http://$HOSTNAME:8080
-
-cat ~/.ssh/id_rsa
-
-echo $HOSTNAME
-
+#ZEND
 
