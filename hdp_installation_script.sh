@@ -73,9 +73,9 @@ mysql -u root -p  # Enter the new MySQL password that was created in the previou
 
 # Setup MySQL DB for Ranger
 # https://docs.hortonworks.com/HDPDocuments/HDP2/HDP-2.6.2/bk_security/content/configuring_mysql_for_ranger.html
-CREATE USER 'rangerdba'@'localhost' IDENTIFIED BY 'rangerdba';
+CREATE USER 'rangerdba'@'localhost' IDENTIFIED BY 'xxxxx';
 GRANT ALL PRIVILEGES ON *.* TO 'rangerdba'@'localhost';
-CREATE USER 'rangerdba'@'%' IDENTIFIED BY 'rangerdba';
+CREATE USER 'rangerdba'@'%' IDENTIFIED BY 'xxxxx';
 GRANT ALL PRIVILEGES ON *.* TO 'rangerdba'@'%';
 GRANT ALL PRIVILEGES ON *.* TO 'rangerdba'@'localhost' WITH GRANT OPTION;
 GRANT ALL PRIVILEGES ON *.* TO 'rangerdba'@'%' WITH GRANT OPTION;
@@ -89,8 +89,8 @@ CREATE DATABASE superset DEFAULT CHARACTER SET utf8;
 echo "Change the MySQL password IDENTIFIED BY, show in the next two lines"
 sleep 15
 
-CREATE USER 'druid'@'%' IDENTIFIED BY 'xxx';
-CREATE USER 'superset'@'%' IDENTIFIED BY 'xxx';
+CREATE USER 'druid'@'%' IDENTIFIED BY 'xxxxx';
+CREATE USER 'superset'@'%' IDENTIFIED BY 'xxxxx';
 
 GRANT ALL PRIVILEGES ON *.* TO 'druid'@'%' WITH GRANT OPTION;
 GRANT ALL PRIVILEGES ON *.* TO 'superset'@'%' WITH GRANT OPTION;
