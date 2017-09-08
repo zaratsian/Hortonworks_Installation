@@ -58,7 +58,7 @@ sudo echo -e "y\nn\n1\ny\nn" | sudo ambari-server setup
 sudo ambari-server start
 
 # Setup MySQL Database and Users 
-# For Druid and Superset
+# For Ranger, Druid and Superset
 sudo yum install -y mysql-connector-java*
 sudo ambari-server setup --jdbc-db=mysql --jdbc-driver=/usr/share/java/mysql-connector-java.jar
 sudo yum -y localinstall https://dev.mysql.com/get/mysql57-community-release-el7-8.noarch.rpm
