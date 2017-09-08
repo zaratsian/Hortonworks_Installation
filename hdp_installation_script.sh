@@ -67,9 +67,22 @@ sudo systemctl start mysqld.service
 grep 'A temporary password is generated for root@localhost' /var/log/mysqld.log |tail -1   # This command should output a temporary password.
 sudo /usr/bin/mysql_secure_installation  # Enter the password, generated in the previous step.
 
+
 # Login to MySQL
 mysql -u root -p  # Enter the new MySQL password that was created in the previous step.
 
+# Setup MySQL DB for Ranger
+# https://docs.hortonworks.com/HDPDocuments/HDP2/HDP-2.6.2/bk_security/content/configuring_mysql_for_ranger.html
+CREATE USER 'rangerdba'@'localhost' IDENTIFIED BY 'rangerdba';
+GRANT ALL PRIVILEGES ON *.* TO 'rangerdba'@'localhost';
+CREATE USER 'rangerdba'@'%' IDENTIFIED BY 'rangerdba';
+GRANT ALL PRIVILEGES ON *.* TO 'rangerdba'@'%';
+GRANT ALL PRIVILEGES ON *.* TO 'rangerdba'@'localhost' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON *.* TO 'rangerdba'@'%' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+
+
+# Setup MySQL DB for Druid and Superset
 CREATE DATABASE druid DEFAULT CHARACTER SET utf8;
 CREATE DATABASE superset DEFAULT CHARACTER SET utf8;
 
