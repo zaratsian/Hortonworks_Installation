@@ -100,7 +100,7 @@ commit;
 exit
 
 # Open up Ambari and continue with Browser-based installation
-echo http://$HOSTNAME:8080
+echo http://$HOSTNAME.field.hortonworks.com:8080
 
 cat ~/.ssh/id_rsa
 #cat ~/.ssh/id_rsa.pub 
