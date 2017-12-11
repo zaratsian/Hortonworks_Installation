@@ -2,8 +2,13 @@
 #################################################################################################################
 #
 #   Hortonworks HDP and HDF
-#
 #   Installation & Config
+#
+#################################################################################################################
+
+#################################################################################################################
+#
+#   Installing HDP
 #
 #################################################################################################################
 
@@ -19,7 +24,7 @@ ssh-keygen
 sudo sh -c "cat /home/centos/.ssh/id_rsa.pub >> /home/centos/.ssh/authorized_keys"
 chmod 700 ~/.ssh
 chmod 600 ~/.ssh/authorized_keys
-cat ~/.ssh/id_rsa.pub
+#cat ~/.ssh/id_rsa.pub
 
 # Update /etc/hosts/ file
 sudo sh -c "echo $(ifconfig eth0 | grep 'inet ' | cut -d: -f2 | awk '{ print $2}') $HOSTNAME $(hostname -f) >> /etc/hosts"
@@ -27,15 +32,6 @@ cat /etc/hosts
 
 # Edit the Network Configuration File
 #sudo sh -c "echo HOSTNAME=$(hostname -f) >> /etc/sysconfig/network"
-
-# Run on all other hosts
-sudo vi ~/.ssh/authorized_keys
-
-# SSH into hosts from primary server
-ssh dzaratsian1.field.hortonworks.com
-ssh dzaratsian2.field.hortonworks.com
-ssh dzaratsian3.field.hortonworks.com
-ssh dzaratsian4.field.hortonworks.com
 
 # Enable NTP 
 sudo yum install -y ntp
@@ -55,17 +51,6 @@ sudo wget -nv http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.
 sudo yum repolist
 sudo yum install -y ambari-server
 sudo echo -e "y\nn\n1\ny\nn" | sudo ambari-server setup
-#sudo ambari-server start
-
-# Install HDF Management Pack
-sudo ambari-server stop
-wget http://public-repo-1.hortonworks.com/HDF/centos7/3.x/updates/3.0.0.0/tars/hdf_ambari_mp/hdf-ambari-mpack-3.0.0.0-453.tar.gz -O /tmp/hdf-ambari-mpack-3.0.0.0-453.tar.gz
-sudo ambari-server install-mpack --mpack=/tmp/hdf-ambari-mpack-3.0.0.0-453.tar.gz --verbose
-#wget http://public-repo-1.hortonworks.com/HDF/centos7/3.x/updates/3.0.1.1/tars/hdf_ambari_mp/hdf-ambari-mpack-3.0.1.1-5.tar.gz -O /tmp/hdf-ambari-mpack-3.0.1.1-5.tar.gz
-#sudo ambari-server install-mpack --mpack=/tmp/hdf-ambari-mpack-3.0.1.1-5.tar.gz --verbose
-#sudo ambari-server start
-
-# Start Ambari
 sudo ambari-server start
 
 # Setup MySQL Database and Users 
@@ -113,9 +98,41 @@ COMMIT;
 
 exit
 
+# Print SSH public key on master host
+cat ~/.ssh/id_rsa.pub
+
+# Add master SSH key to all other hosts
+sudo vi ~/.ssh/authorized_keys
+
+# From Master, SSH into hosts
+ssh dzaratsian1.field.hortonworks.com
+ssh dzaratsian2.field.hortonworks.com
+ssh dzaratsian3.field.hortonworks.com
+ssh dzaratsian4.field.hortonworks.com
+ssh dzaratsian5.field.hortonworks.com
+
+# Print SSH private key (used within Ambari during setup)
+cat ~/.ssh/id_rsa
+
 # Open up Ambari and continue with Browser-based installation
 echo http://$HOSTNAME.field.hortonworks.com:8080
 
-cat ~/.ssh/id_rsa
+
+#################################################################################################################
+#
+#   Installing HDF
+#
+#################################################################################################################
+
+# Install HDF Management Pack
+wget http://public-repo-1.hortonworks.com/HDF/centos7/3.x/updates/3.0.0.0/tars/hdf_ambari_mp/hdf-ambari-mpack-3.0.0.0-453.tar.gz -O /tmp/hdf-ambari-mpack-3.0.0.0-453.tar.gz
+sudo ambari-server install-mpack --mpack=/tmp/hdf-ambari-mpack-3.0.0.0-453.tar.gz --verbose
+#wget http://public-repo-1.hortonworks.com/HDF/centos7/3.x/updates/3.0.1.1/tars/hdf_ambari_mp/hdf-ambari-mpack-3.0.1.1-5.tar.gz -O /tmp/hdf-ambari-mpack-3.0.1.1-5.tar.gz
+#sudo ambari-server install-mpack --mpack=/tmp/hdf-ambari-mpack-3.0.1.1-5.tar.gz --verbose
+
+# Restart Ambari
+sudo ambari-server restart
+
+
 
 #ZEND
