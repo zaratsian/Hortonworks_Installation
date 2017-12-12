@@ -134,5 +134,24 @@ sudo ambari-server install-mpack --mpack=/tmp/hdf-ambari-mpack-3.0.0.0-453.tar.g
 sudo ambari-server restart
 
 
+#################################################################################################################
+#
+#   Additional Packages
+#
+#################################################################################################################
+
+# Installing Anaconda
+sudo su
+cd /tmp
+yum install -y bzip2
+wget https://repo.continuum.io/archive/Anaconda2-5.0.1-Linux-x86_64.sh
+chmod +x Anaconda2-5.0.1-Linux-x86_64.sh
+./Anaconda2-5.0.1-Linux-x86_64.sh
+
+
+# Installing R
+yum install -y epel-release
+yum install -y R R-devel libcurl-devel openssl-devel
+
 
 #ZEND
