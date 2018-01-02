@@ -146,7 +146,8 @@ cd /tmp
 yum install -y bzip2
 wget https://repo.continuum.io/archive/Anaconda2-5.0.1-Linux-x86_64.sh
 chmod +x Anaconda2-5.0.1-Linux-x86_64.sh
-./Anaconda2-5.0.1-Linux-x86_64.sh
+./Anaconda2-5.0.1-Linux-x86_64.sh -b
+cat ~/.bashrc | grep anaconda >> /home/centos/.bashrc
 
 
 # Installing R
