@@ -2,13 +2,13 @@
 #################################################################################################################
 #
 #   Hortonworks HDP and HDF
-#   Installation & Config
+#   Automated Installation & Config Scripts
 #
 #################################################################################################################
 
 #################################################################################################################
 #
-#   Installing HDP
+#   STEP 1: Setup Ambari Host (For HDP. Steps for adding HDF are show further down in this script)
 #
 #################################################################################################################
 
@@ -17,14 +17,15 @@ cat /etc/centos-release
 
 # Update Centos
 #sudo yum -y update
+
+# Install WGET
 sudo yum install -y wget
 
 # Setup password-less SSH
-ssh-keygen
+ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''   # Generate a SSH keypair without being prompted for a passphrase
 sudo sh -c "cat /home/centos/.ssh/id_rsa.pub >> /home/centos/.ssh/authorized_keys"
 chmod 700 ~/.ssh
 chmod 600 ~/.ssh/authorized_keys
-#cat ~/.ssh/id_rsa.pub
 
 # Update /etc/hosts/ file
 sudo sh -c "echo $(ifconfig eth0 | grep 'inet ' | cut -d: -f2 | awk '{ print $2}') $HOSTNAME $(hostname -f) >> /etc/hosts"
@@ -60,13 +61,15 @@ sudo yum -y localinstall https://dev.mysql.com/get/mysql57-community-release-el7
 sudo yum install -y mysql-community-server
 sudo systemctl start mysqld.service
 # This command should output a temporary password.
-grep 'A temporary password is generated for root@localhost' /var/log/mysqld.log |tail -1
+grep 'A temporary password is generated for root@localhost: ' /var/log/mysqld.log |tail -1
+echo 'Dummy mysql password currently used: horton.Mysql123'
+#export TMP_SQL_PW=`grep 'A temporary password is generated for root@localhost' /var/log/mysqld.log | tail -1 | cut -d" " -f11`
 # Enter the password, generated in the previous step.
 sudo /usr/bin/mysql_secure_installation
 
 # Login to MySQL
 # Enter the new MySQL password that was created in the previous step.
-mysql -u root -p
+mysql -u root -p 
 
 # Setup MySQL Databases, Users, and Privileges
 # https://docs.hortonworks.com/HDPDocuments/HDP2/HDP-2.6.2/bk_security/content/configuring_mysql_for_ranger.html
@@ -98,29 +101,74 @@ COMMIT;
 
 exit
 
-# Print SSH public key on master host
-cat ~/.ssh/id_rsa.pub
-
-# Add master SSH key to all other hosts
-sudo vi ~/.ssh/authorized_keys
-
-# From Master, SSH into hosts
-ssh dzaratsian1.field.hortonworks.com
-ssh dzaratsian2.field.hortonworks.com
-ssh dzaratsian3.field.hortonworks.com
-ssh dzaratsian4.field.hortonworks.com
-ssh dzaratsian5.field.hortonworks.com
+# Open up Ambari and continue with Browser-based installation
+echo http://$HOSTNAME.field.hortonworks.com:8080
 
 # Print SSH private key (used within Ambari during setup)
 cat ~/.ssh/id_rsa
 
-# Open up Ambari and continue with Browser-based installation
-echo http://$HOSTNAME.field.hortonworks.com:8080
+# Print SSH public key on master host
+cat ~/.ssh/id_rsa.pub
+
+# Save public key to local drive (in order to scp to other hosts), then copy to all other hosts in the cluster
+cp ~/.ssh/id_rsa.pub /tmp/.
+echo "[ INFO ] Exiting from the host machine in 5 seconds. The next step will copy the Ambari Host public key into all other hosts at ~/.ssh/authorized_keys"
+sleep 5
+exit
+# Save public key to local drive (in order to scp to other hosts)
+scp ~/.ssh/field.pem centos@dzaratsian0.field.hortonworks.com:/tmp/id_rsa.pub /tmp/.
+# Copy the Ambari Host public key into this machine's ~/.ssh/authorized_key file
+cat /tmp/id_rsa.pub | ssh centos@dzaratsian1.field.hortonworks.com 'cat >> ~/.ssh/authorized_keys'
+cat /tmp/id_rsa.pub | ssh centos@dzaratsian2.field.hortonworks.com 'cat >> ~/.ssh/authorized_keys'
+cat /tmp/id_rsa.pub | ssh centos@dzaratsian3.field.hortonworks.com 'cat >> ~/.ssh/authorized_keys'
+cat /tmp/id_rsa.pub | ssh centos@dzaratsian4.field.hortonworks.com 'cat >> ~/.ssh/authorized_keys'
+
 
 
 #################################################################################################################
 #
-#   Installing HDF
+#   STEP 2: Installing HDP (Run on all hosts except for Ambari Host)
+#
+#################################################################################################################
+
+# Display Release
+cat /etc/centos-release
+
+# Update Centos
+#sudo yum -y update
+
+# Install WGET
+sudo yum install -y wget
+
+# Setup password-less SSH
+ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''   # Generate a SSH keypair without being prompted for a passphrase
+sudo sh -c "cat /home/centos/.ssh/id_rsa.pub >> /home/centos/.ssh/authorized_keys"
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/authorized_keys
+
+# Update /etc/hosts/ file
+sudo sh -c "echo $(ifconfig eth0 | grep 'inet ' | cut -d: -f2 | awk '{ print $2}') $HOSTNAME $(hostname -f) >> /etc/hosts"
+cat /etc/hosts
+
+# Edit the Network Configuration File
+#sudo sh -c "echo HOSTNAME=$(hostname -f) >> /etc/sysconfig/network"
+
+# Enable NTP 
+sudo yum install -y ntp
+sudo systemctl is-enabled ntpd
+sudo systemctl enable ntpd
+sudo systemctl start ntpd
+
+# Temporarily Disable Firewall
+sudo systemctl is-enabled firewalld
+sudo systemctl disable firewalld
+sudo systemctl is-enabled firewalld
+sudo service firewalld stop
+
+
+#################################################################################################################
+#
+#   STEP 3: Installing HDF Management Pack for Ambari
 #
 #################################################################################################################
 
