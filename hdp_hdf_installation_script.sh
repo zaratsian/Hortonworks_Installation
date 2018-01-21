@@ -46,12 +46,14 @@ sudo systemctl disable firewalld
 sudo systemctl is-enabled firewalld
 sudo service firewalld stop
 
-# Download Ambari Repo and Setup Ambar Server
-sudo wget -nv http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.5.1.0/ambari.repo -O /etc/yum.repos.d/ambari.repo
+# Download Ambari Repo (2.6.1.0) and Setup Ambar Server
+#sudo wget -nv http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.5.1.0/ambari.repo -O /etc/yum.repos.d/ambari.repo
 #sudo wget -nv http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.6.0.0/ambari.repo -O /etc/yum.repos.d/ambari.repo
+sudo wget -nv http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.6.1.0/ambari.repo -O /etc/yum.repos.d/ambari.repo
 sudo yum repolist
 sudo yum install -y ambari-server
-sudo echo -e "y\nn\n1\ny\nn" | sudo ambari-server setup
+#sudo echo -e "y\nn\n1\ny\nn" | sudo ambari-server setup  # Works with Ambari 2.5.x
+sudo echo -e "y\nn\ny\n1\ny\ny\nn" | sudo ambari-server setup
 sudo ambari-server start
 
 # Setup MySQL Database and Users 
