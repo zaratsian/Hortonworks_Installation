@@ -53,7 +53,7 @@ sudo wget -nv http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.
 sudo yum repolist
 sudo yum install -y ambari-server
 #sudo echo -e "y\nn\n1\ny\nn" | sudo ambari-server setup  # Works with Ambari 2.5.x
-sudo echo -e "y\nn\ny\n1\ny\ny\nn" | sudo ambari-server setup
+sudo echo -e "y\nn\n1\ny\ny\nn" | sudo ambari-server setup
 sudo ambari-server start
 
 # Setup MySQL Database and Users 
@@ -124,7 +124,7 @@ cat /tmp/id_rsa.pub | ssh centos@dzaratsian1.field.hortonworks.com 'cat >> ~/.ss
 cat /tmp/id_rsa.pub | ssh centos@dzaratsian2.field.hortonworks.com 'cat >> ~/.ssh/authorized_keys'
 cat /tmp/id_rsa.pub | ssh centos@dzaratsian3.field.hortonworks.com 'cat >> ~/.ssh/authorized_keys'
 cat /tmp/id_rsa.pub | ssh centos@dzaratsian4.field.hortonworks.com 'cat >> ~/.ssh/authorized_keys'
-
+cat /tmp/id_rsa.pub | ssh centos@dzaratsian5.field.hortonworks.com 'cat >> ~/.ssh/authorized_keys'
 
 
 #################################################################################################################
