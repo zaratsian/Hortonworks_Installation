@@ -194,7 +194,7 @@ cd /tmp
 yum install -y bzip2
 wget https://repo.continuum.io/archive/Anaconda2-5.0.1-Linux-x86_64.sh
 chmod +x Anaconda2-5.0.1-Linux-x86_64.sh
-./Anaconda2-5.0.1-Linux-x86_64.sh -b
+./Anaconda2-5.0.1-Linux-x86_64.sh -b -p /opt/anaconda2
 echo '''export PATH="/opt/anaconda2/bin:$PATH"''' >> ~/.bashrc
 echo '''export PATH="/opt/anaconda2/bin:$PATH"''' >> /home/centos/.bashrc
 
