@@ -197,6 +197,7 @@ chmod +x Anaconda2-5.0.1-Linux-x86_64.sh
 ./Anaconda2-5.0.1-Linux-x86_64.sh -b -p /opt/anaconda2
 echo '''export PATH="/opt/anaconda2/bin:$PATH"''' >> ~/.bashrc
 echo '''export PATH="/opt/anaconda2/bin:$PATH"''' >> /home/centos/.bashrc
+rm -f /tmp/Anaconda2-5.0.1-Linux-x86_64.sh
 
 
 # Installing R
