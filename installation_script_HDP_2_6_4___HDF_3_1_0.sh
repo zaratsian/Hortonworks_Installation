@@ -173,4 +173,23 @@ sudo service firewalld stop
 
 
 
+
+
+####################################################################################################################################
+#
+#   Install HDF 3.1.0 on already installed HDP 2.6.4 Cluster
+#
+####################################################################################################################################
+
+# https://docs.hortonworks.com/HDPDocuments/HDF3/HDF-3.1.0/bk_release-notes/content/ch_hdf_relnotes.html#repo-location
+sudo wget http://public-repo-1.hortonworks.com/HDF/centos7/3.x/updates/3.1.0.0/tars/hdf_ambari_mp/hdf-ambari-mpack-3.1.0.0-564.tar.gz -O /tmp/hdf-ambari-mpack-3.1.0.0-564.tar.gz
+
+sudo ambari-server install-mpack --mpack=/tmp/hdf-ambari-mpack-3.1.0.0-564.tar.gz --verbose
+
+sudo ambari-server restart
+
+
+
+
+
 #ZEND
