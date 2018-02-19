@@ -135,6 +135,8 @@ cat /tmp/id_rsa.pub | ssh centos@dzaratsian5.field.hortonworks.com 'cat >> ~/.ss
 #
 #   STEP 2: Installing HDP (Run on all hosts except for Ambari Host)
 #
+#   https://docs.hortonworks.com/HDPDocuments/HDF3/HDF-3.1.0/bk_installing-hdf-on-hdp/content/ch_install-mpack.html
+#
 #################################################################################################################
 
 # Display Release
