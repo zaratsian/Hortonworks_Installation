@@ -87,6 +87,11 @@ GRANT ALL PRIVILEGES ON *.* TO 'hive'@'%';
 GRANT ALL PRIVILEGES ON *.* TO 'hive'@'dzaratsian0.field.hortonworks.com';
 FLUSH PRIVILEGES;
 CREATE DATABASE hive;
+quit;
+
+
+# To use MySQL with Hive, you must download the MySQL Connector/J JDBC Driver from MySQL
+sudo ambari-server setup --jdbc-db=mysql --jdbc-driver=/usr/share/java/mysql-connector-java.jar
 
 
 # Download the Ambari Repository
