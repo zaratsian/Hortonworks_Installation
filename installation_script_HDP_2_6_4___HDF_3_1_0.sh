@@ -87,6 +87,7 @@ GRANT ALL PRIVILEGES ON *.* TO 'hive'@'%';
 GRANT ALL PRIVILEGES ON *.* TO 'hive'@'dzaratsian0.field.hortonworks.com';
 FLUSH PRIVILEGES;
 CREATE DATABASE hive;
+COMMIT;
 quit;
 
 
