@@ -4,6 +4,8 @@
 #   Hortonworks HDP and HDF
 #   Automated Installation & Config Scripts
 #
+#   Test with HDP 2.6.2 and HDF 3.0
+#
 #################################################################################################################
 
 #################################################################################################################
@@ -46,14 +48,11 @@ sudo systemctl disable firewalld
 sudo systemctl is-enabled firewalld
 sudo service firewalld stop
 
-# Download Ambari Repo (2.6.1.0) and Setup Ambar Server
-#sudo wget -nv http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.5.1.0/ambari.repo -O /etc/yum.repos.d/ambari.repo
-#sudo wget -nv http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.6.0.0/ambari.repo -O /etc/yum.repos.d/ambari.repo
-sudo wget -nv http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.6.1.0/ambari.repo -O /etc/yum.repos.d/ambari.repo
+# Download Ambari Repo and Setup Ambar Server
+sudo wget -nv http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.5.2.0/ambari.repo -O /etc/yum.repos.d/ambari.repo
 sudo yum repolist
 sudo yum install -y ambari-server
-#sudo echo -e "y\nn\n1\ny\nn" | sudo ambari-server setup  # Works with Ambari 2.5.x
-sudo echo -e "y\nn\n1\ny\ny\nn" | sudo ambari-server setup
+sudo echo -e "y\nn\n1\ny\nn" | sudo ambari-server setup  # Works with Ambari 2.5.x
 sudo ambari-server start
 
 # Setup MySQL Database and Users 
@@ -172,13 +171,15 @@ sudo service firewalld stop
 #
 #   STEP 3: Installing HDF Management Pack for Ambari
 #
+#   Perform this step once HDP has been installed and the services are up and running within Ambari.
+#
 #################################################################################################################
 
 # Install HDF Management Pack
-wget http://public-repo-1.hortonworks.com/HDF/centos7/3.x/updates/3.0.0.0/tars/hdf_ambari_mp/hdf-ambari-mpack-3.0.0.0-453.tar.gz -O /tmp/hdf-ambari-mpack-3.0.0.0-453.tar.gz
-sudo ambari-server install-mpack --mpack=/tmp/hdf-ambari-mpack-3.0.0.0-453.tar.gz --verbose
-#wget http://public-repo-1.hortonworks.com/HDF/centos7/3.x/updates/3.0.1.1/tars/hdf_ambari_mp/hdf-ambari-mpack-3.0.1.1-5.tar.gz -O /tmp/hdf-ambari-mpack-3.0.1.1-5.tar.gz
-#sudo ambari-server install-mpack --mpack=/tmp/hdf-ambari-mpack-3.0.1.1-5.tar.gz --verbose
+#wget http://public-repo-1.hortonworks.com/HDF/centos7/3.x/updates/3.0.0.0/tars/hdf_ambari_mp/hdf-ambari-mpack-3.0.0.0-453.tar.gz -O /tmp/hdf-ambari-mpack-3.0.0.0-453.tar.gz
+#sudo ambari-server install-mpack --mpack=/tmp/hdf-ambari-mpack-3.0.0.0-453.tar.gz --verbose
+wget http://public-repo-1.hortonworks.com/HDF/centos7/3.x/updates/3.0.1.1/tars/hdf_ambari_mp/hdf-ambari-mpack-3.0.1.1-5.tar.gz -O /tmp/hdf-ambari-mpack-3.0.1.1-5.tar.gz
+sudo ambari-server install-mpack --mpack=/tmp/hdf-ambari-mpack-3.0.1.1-5.tar.gz --verbose
 
 # Restart Ambari
 sudo ambari-server restart
