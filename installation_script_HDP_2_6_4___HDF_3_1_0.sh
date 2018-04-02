@@ -1,7 +1,7 @@
 
 ####################################################################################################################################
 #
-#   HDP 2.6.4 Installation w/ Ambari 2.6.1
+#   HDP 2.6.4 and HDF 3.1 Installation (w/ Ambari 2.6.1)
 #
 #   Docs: https://docs.hortonworks.com/HDPDocuments/Ambari-2.6.1.0/bk_ambari-installation/content/ch_Getting_Ready.html
 #
