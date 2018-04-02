@@ -76,6 +76,7 @@ grep 'A temporary password is generated for root@localhost: ' /var/log/mysqld.lo
 echo 'Dummy mysql password currently used: horton.Mysql123'
 sudo /usr/bin/mysql_secure_installation
 
+
 mysql -u root -p
 # Create Hive DB, users, and Permissions
 # https://docs.hortonworks.com/HDPDocuments/Ambari-2.6.1.0/bk_ambari-administration/content/using_hive_with_mysql.html
@@ -91,10 +92,6 @@ COMMIT;
 quit;
 
 
-# To use MySQL with Hive, you must download the MySQL Connector/J JDBC Driver from MySQL
-sudo ambari-server setup --jdbc-db=mysql --jdbc-driver=/usr/share/java/mysql-connector-java.jar
-
-
 # Download the Ambari Repository
 sudo wget -nv http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.6.1.0/ambari.repo -O /etc/yum.repos.d/ambari.repo
 sudo yum repolist
@@ -103,6 +100,10 @@ sudo echo -e "y\nn\n1\ny\ny\nn\n" | sudo ambari-server setup
 sudo ambari-server start
 # ambari-server start --skip-database-check
 sudo ambari-server status
+
+
+# To use MySQL with Hive, you must download the MySQL Connector/J JDBC Driver from MySQL
+sudo ambari-server setup --jdbc-db=mysql --jdbc-driver=/usr/share/java/mysql-connector-java.jar
 
 
 # Open up Ambari and continue with Browser-based installation
@@ -125,13 +126,14 @@ sleep 5
 exit
 
 # Save public key to local drive (in order to scp to other hosts)
-scp ~/.ssh/field.pem centos@dzaratsian0.field.hortonworks.com:/tmp/id_rsa.pub /tmp/.
+scp -i ~/.ssh/field.pem centos@dzaratsian0.field.hortonworks.com:/tmp/id_rsa.pub /tmp/.
 # Copy the Ambari Host public key into this machine's ~/.ssh/authorized_key file
 cat /tmp/id_rsa.pub | ssh centos@dzaratsian1.field.hortonworks.com 'cat >> ~/.ssh/authorized_keys'
 cat /tmp/id_rsa.pub | ssh centos@dzaratsian2.field.hortonworks.com 'cat >> ~/.ssh/authorized_keys'
 cat /tmp/id_rsa.pub | ssh centos@dzaratsian3.field.hortonworks.com 'cat >> ~/.ssh/authorized_keys'
 cat /tmp/id_rsa.pub | ssh centos@dzaratsian4.field.hortonworks.com 'cat >> ~/.ssh/authorized_keys'
 cat /tmp/id_rsa.pub | ssh centos@dzaratsian5.field.hortonworks.com 'cat >> ~/.ssh/authorized_keys'
+cat /tmp/id_rsa.pub | ssh centos@dzaratsian6.field.hortonworks.com 'cat >> ~/.ssh/authorized_keys'
 
 
 
