@@ -1,7 +1,7 @@
 
 ####################################################################################################################################
 #
-#   HDP 2.6.4 Installation w/ Ambari 2.6.1
+#   HDP 2.6.4 and HDF 3.1.0 Installation (w/ Ambari 2.6.1)
 #
 #   Docs: https://docs.hortonworks.com/HDPDocuments/Ambari-2.6.1.0/bk_ambari-installation/content/ch_Getting_Ready.html
 #
@@ -83,11 +83,32 @@ mysql -u root -p
 CREATE USER 'hive'@'localhost' IDENTIFIED BY 'horton.Mysql123';
 CREATE USER 'hive'@'%' IDENTIFIED BY 'horton.Mysql123';
 CREATE USER 'hive'@'dzaratsian0.field.hortonworks.com' IDENTIFIED BY 'horton.Mysql123';
+CREATE USER 'rangerdba'@'%' IDENTIFIED BY 'horton.Mysql123';
+CREATE USER 'rangerdba'@'localhost' IDENTIFIED BY 'horton.Mysql123';
+CREATE USER 'druid'@'%' IDENTIFIED BY 'horton.Mysql123';
+CREATE USER 'superset'@'%' IDENTIFIED BY 'horton.Mysql123';
+CREATE USER 'registry'@'%' IDENTIFIED BY 'horton.Mysql123';
+CREATE USER 'streamline'@'%' IDENTIFIED BY 'horton.Mysql123';
+
 GRANT ALL PRIVILEGES ON *.* TO 'hive'@'localhost';
 GRANT ALL PRIVILEGES ON *.* TO 'hive'@'%';
 GRANT ALL PRIVILEGES ON *.* TO 'hive'@'dzaratsian0.field.hortonworks.com';
+GRANT ALL PRIVILEGES ON *.* TO 'rangerdba'@'localhost';
+GRANT ALL PRIVILEGES ON *.* TO 'rangerdba'@'%';
+GRANT ALL PRIVILEGES ON *.* TO 'rangerdba'@'localhost' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON *.* TO 'rangerdba'@'%' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON *.* TO 'druid'@'%' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON *.* TO 'superset'@'%' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON registry.* TO 'registry'@'%' WITH GRANT OPTION ;
+GRANT ALL PRIVILEGES ON streamline.* TO 'streamline'@'%' WITH GRANT OPTION ;
+
 FLUSH PRIVILEGES;
 CREATE DATABASE hive;
+CREATE DATABASE druid DEFAULT CHARACTER SET utf8;
+CREATE DATABASE superset DEFAULT CHARACTER SET utf8;
+CREATE DATABASE registry;
+CREATE DATABASE streamline;
+
 COMMIT;
 quit;
 
