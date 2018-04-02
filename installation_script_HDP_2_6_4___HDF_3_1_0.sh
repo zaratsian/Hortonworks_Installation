@@ -1,7 +1,7 @@
 
 ####################################################################################################################################
 #
-#   HDP 2.6.4 and HDF 3.1.0 Installation (w/ Ambari 2.6.1)
+#   HDP 2.6.4 Installation w/ Ambari 2.6.1
 #
 #   Docs: https://docs.hortonworks.com/HDPDocuments/Ambari-2.6.1.0/bk_ambari-installation/content/ch_Getting_Ready.html
 #
@@ -103,6 +103,7 @@ GRANT ALL PRIVILEGES ON registry.* TO 'registry'@'%' WITH GRANT OPTION ;
 GRANT ALL PRIVILEGES ON streamline.* TO 'streamline'@'%' WITH GRANT OPTION ;
 
 FLUSH PRIVILEGES;
+
 CREATE DATABASE hive;
 CREATE DATABASE druid DEFAULT CHARACTER SET utf8;
 CREATE DATABASE superset DEFAULT CHARACTER SET utf8;
