@@ -66,7 +66,19 @@ sudo service firewalld stop
 # https://docs.hortonworks.com/HDPDocuments/Ambari-2.6.1.0/bk_ambari-installation/content/disable_selinux_and_packagekit_and_check_the_umask_value.html
 
 
-# Install MySQL
+# Download the Ambari Repository
+sudo wget -nv http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.6.1.0/ambari.repo -O /etc/yum.repos.d/ambari.repo
+sudo yum repolist
+sudo yum install -y ambari-server
+sudo echo -e "y\nn\n1\ny\ny\nn\n" | sudo ambari-server setup
+sudo ambari-server start
+# ambari-server start --skip-database-check
+sudo ambari-server status
+
+
+################################################
+# If using MYSQL, Install MySQL
+################################################
 sudo yum localinstall -y https://dev.mysql.com/get/mysql57-community-release-el7-8.noarch.rpm
 sudo yum install -y epel-release mysql-connector-java* mysql-community-server
 sudo ambari-server setup --jdbc-db=mysql --jdbc-driver=/usr/share/java/mysql-connector-java.jar
@@ -75,7 +87,6 @@ sudo systemctl status mysqld.service
 grep 'A temporary password is generated for root@localhost: ' /var/log/mysqld.log |tail -1
 echo 'Dummy mysql password currently used: horton.Mysql123'
 sudo /usr/bin/mysql_secure_installation
-
 
 mysql -u root -p
 # Create Hive DB, users, and Permissions
@@ -113,19 +124,48 @@ CREATE DATABASE streamline;
 COMMIT;
 quit;
 
-
-# Download the Ambari Repository
-sudo wget -nv http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.6.1.0/ambari.repo -O /etc/yum.repos.d/ambari.repo
-sudo yum repolist
-sudo yum install -y ambari-server
-sudo echo -e "y\nn\n1\ny\ny\nn\n" | sudo ambari-server setup
-sudo ambari-server start
-# ambari-server start --skip-database-check
-sudo ambari-server status
-
-
 # To use MySQL with Hive, you must download the MySQL Connector/J JDBC Driver from MySQL
 sudo ambari-server setup --jdbc-db=mysql --jdbc-driver=/usr/share/java/mysql-connector-java.jar
+
+################################################
+# If using POSTGRESQL, Install Postgresql
+################################################
+wget https://jdbc.postgresql.org/download/postgresql-42.2.2.jar
+sudo ambari-server setup --jdbc-db=postgres --jdbc-driver=postgresql-42.2.2.jar
+sudo -u postgres psql 
+CREATE DATABASE ambari; 
+CREATE DATABASE hive;
+CREATE USER ambaridba WITH PASSWORD 'horton.Psql123';
+CREATE USER hive WITH PASSWORD 'horton.Psql123';
+GRANT ALL PRIVILEGES ON DATABASE ambari TO ambaridba; 
+GRANT ALL PRIVILEGES ON DATABASE hive TO hive; 
+\connect ambari;
+CREATE SCHEMA ambari_schema AUTHORIZATION ambaridba;
+ALTER SCHEMA ambari_schema OWNER TO ambaridba;
+ALTER ROLE ambaridba SET search_path to 'ambari_schema', 'public';
+\q
+
+sudo vi /var/lib/pgsql/data/pg_hba.conf
+# Add these lines
+local all   ambaridba trust
+host  all   ambaridba 0.0.0.0/0  trust
+host  all   ambaridba ::/0 trust
+local all   hive trust
+host  all   hive 0.0.0.0/0  trust
+host  all   hive ::/0 trust
+
+systemctl list-units|grep postgresql
+sudo systemctl restart postgresql.service
+
+psql -U ambaridba -d ambari
+\connect ambari
+\i /var/lib/ambari-server/resources/Ambari-DDL-Postgres-CREATE.sql
+\q
+
+
+################################################
+# Continue with Ambari setup
+################################################
 
 
 # Open up Ambari and continue with Browser-based installation
