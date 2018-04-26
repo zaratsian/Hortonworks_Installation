@@ -145,18 +145,19 @@ ALTER SCHEMA ambari_schema OWNER TO ambaridba;
 ALTER ROLE ambaridba SET search_path to 'ambari_schema', 'public';
 \q
 
-sudo vi /var/lib/pgsql/data/pg_hba.conf
-# Add these lines
-local all   ambaridba trust
-host  all   ambaridba 0.0.0.0/0  trust
-host  all   ambaridba ::/0 trust
-local all   hive trust
-host  all   hive 0.0.0.0/0  trust
-host  all   hive ::/0 trust
+# Update the pgsql pg_hba.conf
+sudo sh -c 'echo "local all   ambaridba trust" >> /var/lib/pgsql/data/pg_hba.conf'
+sudo sh -c 'echo "host  all   ambaridba 0.0.0.0/0  trust" >> /var/lib/pgsql/data/pg_hba.conf'
+sudo sh -c 'echo "host  all   ambaridba ::/0 trust" >> /var/lib/pgsql/data/pg_hba.conf'
+sudo sh -c 'echo "local all   hive trust" >> /var/lib/pgsql/data/pg_hba.conf'
+sudo sh -c 'echo "host  all   hive 0.0.0.0/0  trust" >> /var/lib/pgsql/data/pg_hba.conf'
+sudo sh -c 'echo "host  all   hive ::/0 trust" >> /var/lib/pgsql/data/pg_hba.conf'
 
+# Restart postgresql
 systemctl list-units|grep postgresql
 sudo systemctl restart postgresql.service
 
+# Login as ambaridba (ambari user) and run the HDP included Ambari-DDL-Postgres-CREATE.sql file
 psql -U ambaridba -d ambari
 \connect ambari
 \i /var/lib/ambari-server/resources/Ambari-DDL-Postgres-CREATE.sql
