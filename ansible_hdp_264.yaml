@@ -1,0 +1,130 @@
+# To Do:
+# 1) Install MySQL
+# 2) Setup MySQL DBs and users
+# 3) Copy SSH keys
+
+# ansible-playbook -i ~/Dropbox/code/scripts/hosts ~/Dropbox/code/scripts/ansible_hdp_264.yaml
+# ansible-playbook -i ~/Dropbox/code/scripts/hosts ~/Dropbox/code/scripts/ansible_hdp_264.yaml --tags core,ambari
+
+#################################################################################################################
+# ./hosts file contains:
+#
+# [hortonworks_ambari]
+# dzaratsian0.field.hortonworks.com
+#
+# [hortonworks_non_ambari_nodes]
+# dzaratsian1.field.hortonworks.com
+# dzaratsian2.field.hortonworks.com
+# dzaratsian3.field.hortonworks.com
+# dzaratsian4.field.hortonworks.com 
+#
+# [hortonworks_datanodes]
+# dzaratsian2.field.hortonworks.com
+# dzaratsian3.field.hortonworks.com
+# dzaratsian4.field.hortonworks.com 
+#################################################################################################################
+
+
+#################################################################################################################
+# 
+#   Setup Pre-requests across all nodes of the cluster
+#
+#################################################################################################################
+- hosts: hortonworks_ambari,hortonworks_non_ambari_nodes
+  
+  remote_user: centos
+  #become: yes
+  #become_user: hdfs
+  #become_method: su
+  
+  tasks:
+    
+    ########################################################  
+    #
+    #   Setup Pre-requisites for Non-Ambari Nodes
+    #
+    ########################################################
+    - name: Setup Password-less SSH
+      tags: core
+      shell: "{{item}}"
+      with_items:
+        - ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''   # Generate a SSH keypair without being prompted for a passphrase
+        - cat /home/centos/.ssh/id_rsa.pub >> /home/centos/.ssh/authorized_keys
+        - chmod 700 ~/.ssh
+        - chmod 600 ~/.ssh/authorized_keys
+    
+    - name: Install Dependencies
+      become: yes
+      become_user: root
+      become_method: sudo
+      tags: core
+      shell: "{{item}}"
+      with_items:
+        # Install dependencies
+        - yum install -y wget
+        # Update /etc/hosts file
+        - echo $(ifconfig eth0 | grep 'inet ' | awk '{print $2}') $HOSTNAME $(hostname -f) >> /etc/hosts
+        # Update network file with hostname
+        - echo HOSTNAME=$(hostname -f) >> /etc/sysconfig/network
+        # Enable NTP 
+        - yum install -y ntp
+        - systemctl is-enabled ntpd
+        - systemctl enable ntpd
+        - systemctl start ntpd
+        # Check status of Firewall (If running, then it should be temporarily disabled)
+        #- systemctl status firewalld
+        - systemctl disable firewalld
+
+
+#################################################################################################################
+# 
+#   Ambari Node - Configuration
+#
+#################################################################################################################
+- hosts: hortonworks_ambari
+  
+  remote_user: centos
+  #become: yes
+  #become_user: hdfs
+  #become_method: su
+  
+  tasks:
+    
+    ########################################################  
+    #
+    #   Ambari Server
+    #
+    ########################################################    
+    - name: Ambari Server - Install and Start
+      become: yes
+      become_user: root
+      become_method: sudo
+      tags: ambari
+      shell: "{{item}}"
+      with_items:
+        - # Download Ambari Repo (saved to /etc/yum.repos.d/ambari.repo)
+        - wget -nv http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.6.1.0/ambari.repo -O /etc/yum.repos.d/ambari.repo
+        #- yum repolist
+        - # Install Ambari Server
+        - yum install -y ambari-server
+        - # Setup Ambari Server
+        - echo -e "y\nn\n1\ny\ny\nn\n" | sudo ambari-server setup
+        - # Starting Ambari Server
+        - ambari-server start
+        #- ambari-server start --skip-database-check
+        - ambari-server status
+
+
+##########################################################################################
+#
+# NOTES:
+#
+#   http://docs.ansible.com/ansible/latest/index.html
+#
+#   "command" is more secure than "shell". However, "shell" uses env variables. Some 
+#   stream operations will also note work with "command", such as >, &, etc.
+#
+#
+##########################################################################################
+
+#ZEND
