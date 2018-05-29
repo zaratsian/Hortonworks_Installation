@@ -1,10 +1,10 @@
 # To Do:
 # 1) Install MySQL
 # 2) Setup MySQL DBs and users
-# 3) Copy SSH keys
+
 
 # ansible-playbook -i ~/Dropbox/code/scripts/hosts ~/Dropbox/code/scripts/ansible_hdp_264.yaml
-# ansible-playbook -i ~/Dropbox/code/scripts/hosts ~/Dropbox/code/scripts/ansible_hdp_264.yaml --tags core,ambari
+# ansible-playbook -i ~/Dropbox/code/scripts/hosts ~/Dropbox/code/scripts/ansible_hdp_264.yaml --tags prereqs,ambari
 
 #################################################################################################################
 # ./hosts file contains:
@@ -36,16 +36,29 @@
   #become: yes
   #become_user: hdfs
   #become_method: su
+  vars:
+    ambari_host_var:  "{{ groups['hortonworks_ambari'] }}"
   
   tasks:
     
     ########################################################  
     #
-    #   Setup Pre-requisites for Non-Ambari Nodes
+    #   Setup Pre-requisites across all nodes 
+    #   of the cluster (all master nodes and datanodes)
     #
     ########################################################
+    - name: Install Python Pip
+      tags: prereqs
+      become: yes
+      become_user: root
+      become_method: sudo
+      shell: "{{ item }}"
+      with_items:
+        - curl "https://bootstrap.pypa.io/get-pip.py" -o /tmp/get-pip.py
+        - python /tmp/get-pip.py
+    
     - name: Setup Password-less SSH
-      tags: core
+      tags: prereqs
       shell: "{{item}}"
       with_items:
         - ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''   # Generate a SSH keypair without being prompted for a passphrase
@@ -57,7 +70,7 @@
       become: yes
       become_user: root
       become_method: sudo
-      tags: core
+      tags: prereqs
       shell: "{{item}}"
       with_items:
         # Install dependencies
@@ -74,6 +87,23 @@
         # Check status of Firewall (If running, then it should be temporarily disabled)
         #- systemctl status firewalld
         - systemctl disable firewalld
+    
+    - name: Capture public key on ambari node
+      tags: prereqs
+      shell: cat "/home/centos/.ssh/id_rsa.pub"
+      register: ambari_pub_key_var
+      when: "'hortonworks_ambari' in group_names"
+    
+    #- debug: msg="{{ ambari_pub_key_var.stdout }}"
+    #  tags: prereqs
+    #  when: "'hortonworks_ambari' in group_names"
+    
+    - name: Copy ambari pub key to all non-ambari nodes
+      tags: prereqs
+      when: "'hortonworks_ambari' not in group_names"
+      shell: "echo '{{ item }}' >> /home/centos/.ssh/authorized_keys"
+      with_items:
+        - "{{ hostvars[ambari_host_var[0]]['ambari_pub_key_var']['stdout'] }}"
 
 
 #################################################################################################################
