@@ -1,10 +1,7 @@
-# To Do:
-# 1) Install MySQL
-# 2) Setup MySQL DBs and users
-
 
 # ansible-playbook -i ~/Dropbox/code/scripts/hosts ~/Dropbox/code/scripts/ansible_hdp_264.yaml
-# ansible-playbook -i ~/Dropbox/code/scripts/hosts ~/Dropbox/code/scripts/ansible_hdp_264.yaml --tags prereqs,ambari
+# ansible-playbook -i ~/Dropbox/code/scripts/hosts ~/Dropbox/code/scripts/ansible_hdp_264.yaml --tags prereqs,ambari,mysql
+# ansible-playbook -i ~/Dropbox/code/scripts/hosts ~/Dropbox/code/scripts/ansible_hdp_264.yaml --tags test
 
 #################################################################################################################
 # ./hosts file contains:
@@ -56,6 +53,7 @@
       with_items:
         - curl "https://bootstrap.pypa.io/get-pip.py" -o /tmp/get-pip.py
         - python /tmp/get-pip.py
+        - pip install pexpect
     
     - name: Setup Password-less SSH
       tags: prereqs
@@ -117,14 +115,17 @@
   #become: yes
   #become_user: hdfs
   #become_method: su
+  vars:
+    ambari_host_var:  "{{ groups['hdf_ambari_node'] }}"
+    mysql_root_password: "horton.Mysql123"
   
   tasks:
     
     ########################################################  
     #
-    #   Ambari Server
+    #   Ambari Installation
     #
-    ########################################################    
+    ########################################################  
     - name: Ambari Server - Install and Start
       become: yes
       become_user: root
@@ -132,23 +133,149 @@
       tags: ambari
       shell: "{{item}}"
       with_items:
-        - # Download Ambari Repo (saved to /etc/yum.repos.d/ambari.repo)
+        # Download Ambari Repo
         - wget -nv http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.6.1.0/ambari.repo -O /etc/yum.repos.d/ambari.repo
         #- yum repolist
-        - # Install Ambari Server
+        # Install Ambari Server
         - yum install -y ambari-server
-        - # Setup Ambari Server
+        # Setup Ambari Server
         - echo -e "y\nn\n1\ny\ny\nn\n" | sudo ambari-server setup
-        - # Starting Ambari Server
+        # Starting Ambari Server
         - ambari-server start
         #- ambari-server start --skip-database-check
         - ambari-server status
+    
+    ########################################################  
+    #
+    #   MySQL Installation
+    #
+    ########################################################    
+    - name: MySQL - Download and Install
+      become: yes
+      become_user: root
+      become_method: sudo
+      tags: mysql
+      shell: "{{item}}"
+      with_items:
+        - yum localinstall -y https://dev.mysql.com/get/mysql57-community-release-el7-8.noarch.rpm
+        - yum install -y epel-release mysql-connector-java* mysql-community-server
+        - ambari-server setup --jdbc-db=mysql --jdbc-driver=/usr/share/java/mysql-connector-java.jar
+        - systemctl start mysqld.service
+        - systemctl status mysqld.service
+    
+    - name: MySQL - Capture MySQL Temporary Password
+      tags: mysql
+      become: yes
+      become_user: root
+      become_method: sudo
+      shell: "grep 'A temporary password is generated for root@localhost: ' /var/log/mysqld.log | tail -1 | rev | cut -d' ' -f1 | rev"
+      register: mysql_temporary_password
+    
+    - debug: msg="{{ mysql_temporary_password['stdout'] }}"
+      tags: mysql
+    
+    # https://stackoverflow.com/questions/24270733/automate-mysql-secure-installation-with-echo-command-via-a-shell-script?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
+    - name: MySQL - Secure Install (update password, clear DBs, etc with mysql_secure_installation)
+      tags: mysql
+      become: yes
+      become_user: root
+      become_method: sudo
+      #vars:
+      #  ambari_host_var:  "{{ groups['hdf_ambari_node'] }}"
+      #  mysql_root_password: "horton.Mysql123"
+      expect:
+        command: /usr/bin/mysql_secure_installation
+        responses:
+          Enter password for user root:
+            - "{{ mysql_temporary_password.stdout }}"
+          New password:
+            - "{{ mysql_root_password }}"
+          Re-enter new password:
+            - "{{ mysql_root_password }}"
+          Change the password for root ?:
+            - 'n'
+          Remove anonymous users?:
+            - 'y'
+          Disallow root login remotely?:
+            - 'y'
+          Remove test database and access to it?:
+            - 'y'
+          Reload privilege tables now?:
+            - 'y'
+    
+    - name: Install MySQL-python, this is required for the task remove anonymous user
+      tags: mysql
+      become: yes
+      become_user: root
+      become_method: sudo
+      yum: name=MySQL-python state=present
+    
+    - name: Create MySQL Databases (hive, druid, superset, ranger)
+      tags: mysql
+      mysql_db:
+        name: "{{ item }}"
+        state: present
+        login_user: root
+        login_password: "horton.Mysql123"
+      with_items:
+        - "hive"
+        - "druid"
+        - "superset"
+        - "ranger"
+    
+    - name: Create MySQL Users for 'localhost'
+      tags: mysql
+      mysql_user:
+        name: "{{ item }}"
+        state: present
+        login_user: root
+        login_password: "horton.Mysql123"
+        password: "horton.Mysql123"
+        host: localhost
+        priv: '*.*:ALL,GRANT'
+      with_items:
+        - "hive"
+        - "druid"
+        - "superset"
+        - "ranger"
+    
+    - name: Create MySQL Users for '%'
+      tags: mysql
+      mysql_user:
+        name: "{{ item }}"
+        state: present
+        login_user: root
+        login_password: "horton.Mysql123"
+        password: "horton.Mysql123"
+        host: '%'
+        priv: '*.*:ALL,GRANT'
+      with_items:
+        - "hive"
+        - "druid"
+        - "superset"
+        - "ranger"
+    
+    - name: Create MySQL Users for 'FQDN'
+      tags: mysql
+      mysql_user:
+        name: "{{ item }}"
+        state: present
+        login_user: root
+        login_password: "horton.Mysql123"
+        password: "horton.Mysql123"
+        host: 'dzaratsian0.field.hortonworks.com'
+        priv: '*.*:ALL,GRANT'
+      with_items:
+        - "hive"
+        - "druid"
+        - "superset"
+        - "ranger"
 
 
 ##########################################################################################
 #
 # NOTES:
-#
+# 
 #   http://docs.ansible.com/ansible/latest/index.html
 #
 #   "command" is more secure than "shell". However, "shell" uses env variables. Some 
