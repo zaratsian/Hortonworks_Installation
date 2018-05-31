@@ -1,5 +1,4 @@
 
-# ansible-playbook -i ~/Dropbox/code/scripts/hosts ~/Dropbox/code/scripts/ansible_hdp_264.yaml
 # ansible-playbook -i ~/Dropbox/code/scripts/hosts ~/Dropbox/code/scripts/ansible_hdp_264.yaml --tags prereqs,ambari,mysql
 # ansible-playbook -i ~/Dropbox/code/scripts/hosts ~/Dropbox/code/scripts/ansible_hdp_264.yaml --tags test
 
@@ -30,11 +29,10 @@
 - hosts: hortonworks_ambari,hortonworks_non_ambari_nodes
   
   remote_user: centos
+  tags: prereqs
   #become: yes
   #become_user: hdfs
   #become_method: su
-  vars:
-    ambari_host_var:  "{{ groups['hortonworks_ambari'] }}"
   
   tasks:
     
@@ -70,6 +68,7 @@
       become_method: sudo
       tags: prereqs
       shell: "{{item}}"
+      ignore_errors: yes 
       with_items:
         # Install dependencies
         - yum install -y wget
@@ -100,6 +99,8 @@
       tags: prereqs
       when: "'hortonworks_ambari' not in group_names"
       shell: "echo '{{ item }}' >> /home/centos/.ssh/authorized_keys"
+      vars:
+        ambari_host_var:  "{{ groups['hortonworks_ambari'] }}"
       with_items:
         - "{{ hostvars[ambari_host_var[0]]['ambari_pub_key_var']['stdout'] }}"
 
@@ -112,12 +113,10 @@
 - hosts: hortonworks_ambari
   
   remote_user: centos
+  tags: ambari,mysql
   #become: yes
   #become_user: hdfs
   #become_method: su
-  vars:
-    ambari_host_var:  "{{ groups['hdf_ambari_node'] }}"
-    mysql_root_password: "horton.Mysql123"
   
   tasks:
     
@@ -180,9 +179,9 @@
       become: yes
       become_user: root
       become_method: sudo
-      #vars:
-      #  ambari_host_var:  "{{ groups['hdf_ambari_node'] }}"
-      #  mysql_root_password: "horton.Mysql123"
+      vars:
+        ambari_host_var:  "{{ groups['hdf_ambari_node'] }}"
+        mysql_root_password: "horton.Mysql123"
       expect:
         command: /usr/bin/mysql_secure_installation
         responses:
@@ -223,54 +222,127 @@
         - "superset"
         - "ranger"
     
-    - name: Create MySQL Users for 'localhost'
-      tags: mysql
-      mysql_user:
-        name: "{{ item }}"
-        state: present
-        login_user: root
-        login_password: "horton.Mysql123"
-        password: "horton.Mysql123"
-        host: localhost
-        priv: '*.*:ALL,GRANT'
-      with_items:
-        - "hive"
-        - "druid"
-        - "superset"
-        - "ranger"
+    #- name: Create MySQL Users for 'localhost'
+    #  tags: mysql
+    #  mysql_user:
+    #    name: "{{ item }}"
+    #    state: present
+    #    login_user: root
+    #    login_password: "horton.Mysql123"
+    #    password: "horton.Mysql123"
+    #    host: localhost
+    #    priv: '*.*:ALL,GRANT'
+    #  with_items:
+    #    - "hive"
+    #    - "druid"
+    #    - "superset"
+    #    - "ranger"
+    #
+    #- name: Create MySQL Users for '%'
+    #  tags: mysql
+    #  mysql_user:
+    #    name: "{{ item }}"
+    #    state: present
+    #    login_user: root
+    #    login_password: "horton.Mysql123"
+    #    password: "horton.Mysql123"
+    #    host: '%'
+    #    priv: '*.*:ALL,GRANT'
+    #  with_items:
+    #    - "hive"
+    #    - "druid"
+    #    - "superset"
+    #    - "ranger"
+    #
+    #- name: Create MySQL Users for 'FQDN'
+    #  tags: mysql
+    #  mysql_user:
+    #    name: "{{ item }}"
+    #    state: present
+    #    login_user: root
+    #    login_password: "horton.Mysql123"
+    #    password: "horton.Mysql123"
+    #    host: 'dzaratsian1.field.hortonworks.com'
+    #    priv: '*.*:ALL,GRANT'
+    #  with_items:
+    #    - "hive"
+    #    - "druid"
+    #    - "superset"
+    #    - "ranger"
     
-    - name: Create MySQL Users for '%'
+    - name: Create MySQL User --> hive
+      #select Host,User,Grant_priv from mysql.user;
       tags: mysql
       mysql_user:
-        name: "{{ item }}"
-        state: present
+        name: hive
+        host: "{{ item }}"
+        password: "{{ mysql_root_password }}"
+        priv: "*.*:ALL,GRANT"
         login_user: root
-        login_password: "horton.Mysql123"
-        password: "horton.Mysql123"
-        host: '%'
-        priv: '*.*:ALL,GRANT'
+        login_password: "{{ mysql_root_password }}"
+      vars:
+        ambari_host_var:  "{{ groups['hdf_ambari_node'] }}"
+        mysql_root_password: "horton.Mysql123"
       with_items:
-        - "hive"
-        - "druid"
-        - "superset"
-        - "ranger"
+        - "{{ ambari_host_var }}"
+        - 127.0.0.1
+        - "%"
+        - "localhost"
+        #- ::1
     
-    - name: Create MySQL Users for 'FQDN'
+    - name: Create MySQL User --> ranger
       tags: mysql
       mysql_user:
-        name: "{{ item }}"
-        state: present
+        name: ranger
+        host: "{{ item }}"
+        password: "{{ mysql_root_password }}"
+        priv: "*.*:ALL,GRANT"
         login_user: root
-        login_password: "horton.Mysql123"
-        password: "horton.Mysql123"
-        host: 'dzaratsian0.field.hortonworks.com'
-        priv: '*.*:ALL,GRANT'
+        login_password: "{{ mysql_root_password }}"
+      vars:
+        ambari_host_var:  "{{ groups['hdf_ambari_node'] }}"
+        mysql_root_password: "horton.Mysql123"
       with_items:
-        - "hive"
-        - "druid"
-        - "superset"
-        - "ranger"
-
+        - "{{ ambari_host_var }}"
+        - 127.0.0.1
+        - "%"
+        - "localhost"
+    
+    - name: Create MySQL User --> druid
+      tags: mysql
+      mysql_user:
+        name: druid
+        host: "{{ item }}"
+        password: "{{ mysql_root_password }}"
+        priv: "*.*:ALL,GRANT"
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+      vars:
+        ambari_host_var:  "{{ groups['hdf_ambari_node'] }}"
+        mysql_root_password: "horton.Mysql123"
+      with_items:
+        - "{{ ambari_host_var }}"
+        - 127.0.0.1
+        - "%"
+        - "localhost"
+    
+    - name: Create MySQL User --> superset
+      tags: mysql
+      mysql_user:
+        name: superset
+        host: "{{ item }}"
+        password: "{{ mysql_root_password }}"
+        priv: "*.*:ALL,GRANT"
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+      vars:
+        ambari_host_var:  "{{ groups['hdf_ambari_node'] }}"
+        mysql_root_password: "horton.Mysql123"
+      with_items:
+        - "{{ ambari_host_var }}"
+        - 127.0.0.1
+        - "%"
+        - "localhost"
 
 ##########################################################################################
 #
@@ -284,4 +356,4 @@
 #
 ##########################################################################################
 
-#ZEND
+#ZEND 
