@@ -1,15 +1,17 @@
 
-# ansible-playbook -i ~/Dropbox/code/scripts/hosts ~/Dropbox/code/scripts/ansible_hdf_3_1.yaml
-# ansible-playbook -i ~/Dropbox/code/scripts/hosts ~/Dropbox/code/scripts/ansible_hdf_3_1.yaml --tags prereqs,ambari,test
+# ansible-playbook -i ~/Dropbox/code/scripts/hosts ~/Dropbox/code/scripts/ansible_hdf_3_1.yaml --tags prereqs,ambari,mysql
 
 #################################################################################################################
 # ./hosts file contains:
 #
-# [hdf_ambari_node]
+# [hortonworks_ambari]
 # dzaratsian0.field.hortonworks.com
 #
-# [hdf_non_ambari_nodes]
+# [hortonworks_non_ambari_nodes]
 # dzaratsian1.field.hortonworks.com
+# dzaratsian2.field.hortonworks.com
+# dzaratsian3.field.hortonworks.com
+# dzaratsian4.field.hortonworks.com 
 #
 #################################################################################################################
 
@@ -19,17 +21,20 @@
 #   Setup Pre-requests across all nodes of the cluster
 #
 #################################################################################################################
-- hosts: hdf_ambari_node,hdf_non_ambari_nodes
+- hosts: hortonworks_ambari,hortonworks_non_ambari_nodes
   
   remote_user: centos
-  vars:
-    ambari_host_var:  "{{ groups['hdf_ambari_node'] }}"
+  tags: prereqs
+  #become: yes
+  #become_user: hdfs
+  #become_method: su
   
   tasks:
     
     ########################################################  
     #
-    #   HDF Pre-requisites
+    #   Setup Pre-requisites across all nodes 
+    #   of the cluster (all master nodes and datanodes)
     #
     ########################################################
     - name: Install Python Pip
@@ -41,22 +46,24 @@
       with_items:
         - curl "https://bootstrap.pypa.io/get-pip.py" -o /tmp/get-pip.py
         - python /tmp/get-pip.py
+        - pip install pexpect
     
     - name: Setup Password-less SSH
       tags: prereqs
       shell: "{{item}}"
       with_items:
-        - ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''
+        - ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''   # Generate a SSH keypair without being prompted for a passphrase
         - cat /home/centos/.ssh/id_rsa.pub >> /home/centos/.ssh/authorized_keys
         - chmod 700 ~/.ssh
         - chmod 600 ~/.ssh/authorized_keys
-     
+    
     - name: Install Dependencies
       become: yes
       become_user: root
       become_method: sudo
       tags: prereqs
       shell: "{{item}}"
+      ignore_errors: yes 
       with_items:
         # Install dependencies
         - yum install -y wget
@@ -77,16 +84,18 @@
       tags: prereqs
       shell: cat "/home/centos/.ssh/id_rsa.pub"
       register: ambari_pub_key_var
-      when: "'hdf_ambari_node' in group_names"
+      when: "'hortonworks_ambari' in group_names"
     
     #- debug: msg="{{ ambari_pub_key_var.stdout }}"
     #  tags: prereqs
-    #  when: "'hdf_ambari_node' in group_names"
+    #  when: "'hortonworks_ambari' in group_names"
     
     - name: Copy ambari pub key to all non-ambari nodes
       tags: prereqs
-      when: "'hdf_ambari_node' not in group_names"
+      when: "'hortonworks_ambari' not in group_names"
       shell: "echo '{{ item }}' >> /home/centos/.ssh/authorized_keys"
+      vars:
+        ambari_host_var:  "{{ groups['hortonworks_ambari'] }}"
       with_items:
         - "{{ hostvars[ambari_host_var[0]]['ambari_pub_key_var']['stdout'] }}"
 
@@ -97,67 +106,15 @@
 #   Ambari Node - Configuration
 #
 #################################################################################################################
-- hosts: hdf_ambari_node
+- hosts: hortonworks_ambari
   
   remote_user: centos
-  vars:
-    ambari_host_var:  "{{ groups['hdf_ambari_node'] }}"
-    mysql_root_password: "horton.Mysql123"
+  tags: ambari,mysql
+  #become: yes
+  #become_user: hdfs
+  #become_method: su
   
   tasks:
-    
-    ########################################################  
-    #
-    #   MySQL Installation
-    #
-    ########################################################    
-    - name: MySQL - Download and Install
-      become: yes
-      become_user: root
-      become_method: sudo
-      tags: ambari
-      shell: "{{item}}"
-      with_items:
-        - yum localinstall -y https://dev.mysql.com/get/mysql57-community-release-el7-8.noarch.rpm
-        - yum install -y epel-release mysql-connector-java* mysql-community-server
-        - ambari-server setup --jdbc-db=mysql --jdbc-driver=/usr/share/java/mysql-connector-java.jar
-        - systemctl start mysqld.service
-        - systemctl status mysqld.service
-    
-    - name: MySQL - Capture MySQL Temporary Password
-      become: yes
-      become_user: root
-      become_method: sudo
-      tags: test
-      shell: "grep 'A temporary password is generated for root@localhost: ' /var/log/mysqld.log | tail -1 | rev | cut -d' ' -f1 | rev"
-      register: mysql_temporary_password
-    
-    - debug: msg="{{ mysql_temporary_password['stdout'] }}"
-      tags: test
-    
-    - name: MySQL - Secure Install (update password, clear DBs, etc with mysql_secure_installation)
-      tags: ansible
-      become: yes
-      become_user: root
-      become_method: sudo
-      echo: yes
-      expect:
-        command: /usr/bin/mysql_secure_installation
-        responses:
-          Enter password for user root:
-            - "{{ mysql_temporary_password.stdout }}"
-          New password:
-            - "{{ mysql_root_password }}"
-          Re-enter new password:
-            - "{{ mysql_root_password }}"
-    
-    - name: Install MySQL-python, this is required for the task remove anonymous user
-      tags: ambari
-      become: yes
-      become_user: root
-      become_method: sudo
-      yum: name=MySQL-python state=present
-    
     
     ########################################################  
     #
@@ -171,7 +128,7 @@
       tags: ambari
       shell: "{{item}}"
       with_items:
-        # Download Ambari Repo (saved to /etc/yum.repos.d/ambari.repo)
+        # Download Ambari Repo
         - wget -nv http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.6.1.0/ambari.repo -O /etc/yum.repos.d/ambari.repo
         #- yum repolist
         # Install Ambari Server
@@ -182,6 +139,132 @@
         - ambari-server start
         #- ambari-server start --skip-database-check
         - ambari-server status
+    
+    - name: Install Ambari MPack for HDF
+      become: yes
+      become_user: root
+      become_method: sudo
+      tags: ambari
+      shell: "{{item}}"
+      with_items:
+        # https://docs.hortonworks.com/HDPDocuments/HDF3/HDF-3.1.0/bk_release-notes/content/ch_hdf_relnotes.html#repo-location
+        - wget http://public-repo-1.hortonworks.com/HDF/centos7/3.x/updates/3.1.0.0/tars/hdf_ambari_mp/hdf-ambari-mpack-3.1.0.0-564.tar.gz -O /tmp/hdf-ambari-mpack-3.1.0.0-564.tar.gz
+        - ambari-server install-mpack --mpack=/tmp/hdf-ambari-mpack-3.1.0.0-564.tar.gz --verbose
+        - ambari-server restart
+    
+    ########################################################  
+    #
+    #   MySQL Installation
+    #
+    ########################################################    
+    - name: MySQL - Download and Install
+      become: yes
+      become_user: root
+      become_method: sudo
+      tags: mysql
+      shell: "{{item}}"
+      with_items:
+        - yum localinstall -y https://dev.mysql.com/get/mysql57-community-release-el7-8.noarch.rpm
+        - yum install -y epel-release mysql-connector-java* mysql-community-server
+        - ambari-server setup --jdbc-db=mysql --jdbc-driver=/usr/share/java/mysql-connector-java.jar
+        - systemctl start mysqld.service
+        - systemctl status mysqld.service
+    
+    - name: MySQL - Capture MySQL Temporary Password
+      tags: mysql
+      become: yes
+      become_user: root
+      become_method: sudo
+      shell: "grep 'A temporary password is generated for root@localhost: ' /var/log/mysqld.log | tail -1 | rev | cut -d' ' -f1 | rev"
+      register: mysql_temporary_password
+    
+    - debug: msg="{{ mysql_temporary_password['stdout'] }}"
+      tags: mysql
+    
+    # https://stackoverflow.com/questions/24270733/automate-mysql-secure-installation-with-echo-command-via-a-shell-script?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
+    - name: MySQL - Secure Install (update password, clear DBs, etc with mysql_secure_installation)
+      tags: mysql
+      become: yes
+      become_user: root
+      become_method: sudo
+      vars:
+        ambari_host_var:  "{{ groups['hdf_ambari_node'] }}"
+        mysql_root_password: "horton.Mysql123"
+      expect:
+        command: /usr/bin/mysql_secure_installation
+        responses:
+          Enter password for user root:
+            - "{{ mysql_temporary_password.stdout }}"
+          New password:
+            - "{{ mysql_root_password }}"
+          Re-enter new password:
+            - "{{ mysql_root_password }}"
+          Change the password for root ?:
+            - 'n'
+          Remove anonymous users?:
+            - 'y'
+          Disallow root login remotely?:
+            - 'y'
+          Remove test database and access to it?:
+            - 'y'
+          Reload privilege tables now?:
+            - 'y'
+    
+    - name: Install MySQL-python, this is required for the task remove anonymous user
+      tags: mysql
+      become: yes
+      become_user: root
+      become_method: sudo
+      yum: name=MySQL-python state=present
+    
+    - name: Create MySQL Databases
+      tags: mysql
+      mysql_db:
+        name: "{{ item }}"
+        state: present
+        login_user: root
+        login_password: "horton.Mysql123"
+      with_items:
+        - "registry"
+        - "streamline"
+    
+    - name: Create MySQL User --> registry
+      #select Host,User,Grant_priv from mysql.user;
+      tags: mysql
+      mysql_user:
+        name: registry
+        host: "{{ item }}"
+        password: "{{ mysql_root_password }}"
+        priv: "*.*:ALL,GRANT"
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+      vars:
+        ambari_host_var:  "{{ groups['hdf_ambari_node'] }}"
+        mysql_root_password: "horton.Mysql123"
+      with_items:
+        - "{{ ambari_host_var }}"
+        - 127.0.0.1
+        - "%"
+        - "localhost"
+        #- ::1
+    
+    - name: Create MySQL User --> streamline
+      tags: mysql
+      mysql_user:
+        name: streamline
+        host: "{{ item }}"
+        password: "{{ mysql_root_password }}"
+        priv: "*.*:ALL,GRANT"
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+      vars:
+        ambari_host_var:  "{{ groups['hdf_ambari_node'] }}"
+        mysql_root_password: "horton.Mysql123"
+      with_items:
+        - "{{ ambari_host_var }}"
+        - 127.0.0.1
+        - "%"
+        - "localhost"
 
 
 
