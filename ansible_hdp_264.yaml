@@ -209,7 +209,7 @@
       become_method: sudo
       yum: name=MySQL-python state=present
     
-    - name: Create MySQL Databases (hive, druid, superset, ranger)
+    - name: Create MySQL Databases (hive, druid, superset, ranger, oozie)
       tags: mysql
       mysql_db:
         name: "{{ item }}"
@@ -221,6 +221,7 @@
         - "druid"
         - "superset"
         - "ranger"
+        - "oozie"
     
     #- name: Create MySQL Users for 'localhost'
     #  tags: mysql
@@ -330,6 +331,24 @@
       tags: mysql
       mysql_user:
         name: superset
+        host: "{{ item }}"
+        password: "{{ mysql_root_password }}"
+        priv: "*.*:ALL,GRANT"
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+      vars:
+        ambari_host_var:  "{{ groups['hdf_ambari_node'] }}"
+        mysql_root_password: "horton.Mysql123"
+      with_items:
+        - "{{ ambari_host_var }}"
+        - 127.0.0.1
+        - "%"
+        - "localhost"
+    
+    - name: Create MySQL User --> Oozie
+      tags: mysql
+      mysql_user:
+        name: oozie
         host: "{{ item }}"
         password: "{{ mysql_root_password }}"
         priv: "*.*:ALL,GRANT"
